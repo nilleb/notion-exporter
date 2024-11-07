@@ -1,16 +1,20 @@
-from typing import Optional
 import asyncio
 import logging
+from typing import Optional
 
-from notion_client import AsyncClient as NotionClient, APIResponseError
+from notion_client import APIResponseError
+from notion_client import AsyncClient as NotionClient
 from notion_client import Client
 from notion_client.helpers import async_collect_paginated_api
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from notion_exporter.block_converter import BlockConverter
 from notion_exporter.property_converter import PropertyConverter
-from notion_exporter.retry_utils import is_rate_limit_exception, wait_for_retry_after_header, is_unavailable_exception
-
+from notion_exporter.retry_utils import (
+    is_rate_limit_exception,
+    is_unavailable_exception,
+    wait_for_retry_after_header,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
 logger = logging.getLogger(__name__)
@@ -26,6 +30,7 @@ class NotionExporter:
         notion_token: str,
         export_child_pages: bool = False,
         extract_page_metadata: bool = False,
+        extract_page_properties: bool = False,
         exclude_title_containing: Optional[str] = None,
     ):
         """
@@ -33,12 +38,14 @@ class NotionExporter:
         :param export_child_pages: Whether to export child pages. Default: True.
         :param extract_page_metadata: Whether to extract page metadata. Default: False.
         :param exclude_title_containing: If specified, pages with titles containing this string will be excluded.
+        :param extract_page_properties: Whether to extract page properties. Default: False.
 
         """
         self.notion = NotionClient(auth=notion_token)
         self.sync_notion = Client(auth=notion_token)
         self.export_child_pages = export_child_pages
         self.extract_page_metadata = extract_page_metadata
+        self.extract_page_properties = extract_page_properties
         self.exclude_title_containing = exclude_title_containing
         self.block_converter = BlockConverter()
         self.property_converter = PropertyConverter(self)
@@ -411,7 +418,7 @@ class NotionExporter:
             front_matter += "---\n\n"
 
         # Add properties of database entries as key-value pairs
-        if "properties" in page_meta:
+        if self.extract_page_properties and "properties" in page_meta:
             for prop_name, prop in page_meta["properties"].items():
                 front_matter += f"{prop_name}: {prop}\n"
             front_matter += "\n"
@@ -474,6 +481,9 @@ class NotionExporter:
             and notion_id[18] != "-"
             and notion_id[23] != "-"
         ):
+            logger.warning("Notion ID is not in the expected format. ID: %s", notion_id)
+
+        return notion_id
             logger.warning("Notion ID is not in the expected format. ID: %s", notion_id)
 
         return notion_id
