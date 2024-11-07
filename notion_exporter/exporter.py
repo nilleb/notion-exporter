@@ -484,6 +484,3 @@ class NotionExporter:
             logger.warning("Notion ID is not in the expected format. ID: %s", notion_id)
 
         return notion_id
-            logger.warning("Notion ID is not in the expected format. ID: %s", notion_id)
-
-        return notion_id
