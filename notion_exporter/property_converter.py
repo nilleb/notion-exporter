@@ -34,6 +34,7 @@ class PropertyConverter:
             "status": self.status,
             "title": self.title,
             "url": self.url,
+            "unique_id": self.unique_id,
         }
         self.notion_exporter = notion_exporter
 
@@ -206,3 +207,13 @@ class PropertyConverter:
         """
         url = property_item["url"] if property_item["url"] else ""
         return url
+
+    @staticmethod
+    def unique_id(property_item: dict) -> str:
+        """
+        Converts a unique_id property to a Markdown string.
+        """
+        uid = property_item["unique_id"]
+        prefix = uid.get('prefix', '')
+        value = uid.get('number', '')
+        return f"{prefix}-{value}"
