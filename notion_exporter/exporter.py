@@ -300,7 +300,10 @@ class NotionExporter:
         stop=stop_after_attempt(3),
     )
     async def _get_page_meta(self, page_id: str) -> dict:
-        page_object = await self.notion.pages.retrieve(page_id)
+        try:
+            page_object = await self.notion.pages.retrieve(page_id)
+        except APIResponseError:
+            return {"page_id": page_id}
         created_by, last_edited_by = await asyncio.gather(
             self._get_user(page_object["created_by"]["id"]), self._get_user(page_object["last_edited_by"]["id"])
         )
