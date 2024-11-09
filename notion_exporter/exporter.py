@@ -303,7 +303,7 @@ class NotionExporter:
         try:
             page_object = await self.notion.pages.retrieve(page_id)
         except APIResponseError:
-            return {"page_id": page_id}
+            return {"page_id": page_id, "title": "Untitled", "url": "", "created_by": "", "last_edited_by": ""}
         created_by, last_edited_by = await asyncio.gather(
             self._get_user(page_object["created_by"]["id"]), self._get_user(page_object["last_edited_by"]["id"])
         )
